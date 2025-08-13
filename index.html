@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor de Tablas Excel</title>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.full.min.js"></script>
+  <title>Editor de Tablas CSV</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     * {
@@ -15,45 +14,69 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
       min-height: 100vh;
       padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .container {
       max-width: 1200px;
+      width: 100%;
       margin: 0 auto;
-      background: white;
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 15px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+      border: 1px solid #e0e0e0;
     }
 
     .header {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      background: linear-gradient(135deg, #4A00E0, #8E2DE2);
       color: white;
       padding: 30px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+      transform: rotate(30deg);
     }
 
     .header h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .header p {
       font-size: 1.1rem;
       opacity: 0.9;
+      position: relative;
+      z-index: 1;
     }
 
     .controls {
       padding: 30px;
       background: #f8f9fa;
       border-bottom: 1px solid #e9ecef;
+      position: relative;
     }
 
     .upload-area {
-      border: 3px dashed #4facfe;
+      border: 3px dashed #4A00E0;
       border-radius: 10px;
       padding: 40px;
       text-align: center;
@@ -62,27 +85,34 @@
       background: #fff;
       cursor: pointer;
       position: relative;
+      overflow: hidden;
     }
 
     .upload-area:hover {
       background: #f8f9ff;
-      border-color: #00f2fe;
+      border-color: #8E2DE2;
     }
 
     .upload-area.active {
       background: #f0f8ff;
-      border-color: #00f2fe;
+      border-color: #8E2DE2;
     }
 
     .upload-area i {
       font-size: 3rem;
-      color: #4facfe;
+      color: #4A00E0;
       margin-bottom: 15px;
+      transition: transform 0.3s ease;
+    }
+
+    .upload-area:hover i {
+      transform: scale(1.1);
     }
 
     .upload-area h3 {
       color: #333;
       margin-bottom: 10px;
+      font-weight: 600;
     }
 
     .upload-area p {
@@ -95,7 +125,7 @@
     }
 
     .upload-btn {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      background: linear-gradient(135deg, #4A00E0, #8E2DE2);
       color: white;
       padding: 12px 30px;
       border: none;
@@ -103,48 +133,170 @@
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+      box-shadow: 0 4px 15px rgba(74, 0, 224, 0.3);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .upload-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #8E2DE2, #4A00E0);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
     }
 
     .upload-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+      box-shadow: 0 6px 20px rgba(74, 0, 224, 0.4);
     }
 
-    .export-section {
-      text-align: center;
+    .upload-btn:hover::after {
+      opacity: 1;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
       margin-top: 20px;
+      flex-wrap: wrap;
     }
-
-    #exportBtn {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    
+    .action-btn {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
       color: white;
-      padding: 12px 30px;
+      padding: 12px 25px;
       border: none;
       border-radius: 25px;
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-      opacity: 0.7;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
     }
-
-    #exportBtn:enabled {
+    
+    .action-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0072ff, #00c6ff);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 114, 255, 0.3);
+    }
+    
+    .action-btn:hover::after {
       opacity: 1;
     }
 
+    #exportBtn {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      opacity: 0.7;
+    }
+    
+    #exportBtn:enabled {
+      opacity: 1;
+    }
+    
     #exportBtn:enabled:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+      box-shadow: 0 6px 20px rgba(255, 65, 108, 0.4);
     }
-
+    
     #exportBtn:disabled {
       cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    #exportBtn::after {
+      background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    }
+
+    .delimiter-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .delimiter-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 15px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      min-width: 200px;
+    }
+    
+    .delimiter-group h4 {
+      color: #4A00E0;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    .delimiter-options {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .delimiter-btn {
+      padding: 8px 15px;
+      border: 2px solid #4A00E0;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+    
+    .delimiter-btn.active {
+      background: #4A00E0;
+      color: white;
+    }
+    
+    .custom-delimiter {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .custom-delimiter input {
+      width: 50px;
+      padding: 8px;
+      border: 2px solid #4A00E0;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
     }
 
     .table-container {
       padding: 30px;
       overflow-x: auto;
+      min-height: 300px;
+      background: #fafafa;
     }
 
     table {
@@ -155,20 +307,28 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     th {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #4A00E0, #8E2DE2);
       color: white;
       padding: 15px;
       text-align: left;
       font-weight: 600;
       position: relative;
+      border-bottom: 2px solid #3a00b0;
     }
 
     td {
       padding: 12px 15px;
       border-bottom: 1px solid #e9ecef;
+      transition: background-color 0.2s ease;
     }
 
     tr:nth-child(even) {
@@ -177,7 +337,6 @@
 
     tr:hover {
       background-color: #e3f2fd;
-      transition: background-color 0.3s ease;
     }
 
     .delete-btn {
@@ -222,6 +381,13 @@
       padding: 50px;
       color: #666;
       font-size: 1.2rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
     }
 
     .no-data i {
@@ -260,18 +426,28 @@
         padding: 4px 8px;
         font-size: 0.7rem;
       }
+      
+      .action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .delimiter-controls {
+        flex-direction: column;
+      }
     }
 
     .loading {
       text-align: center;
-      padding: 20px;
+      padding: 40px;
       color: #666;
     }
 
     .loading i {
-      font-size: 2rem;
-      animation: spin 1s linear infinite;
-      color: #4facfe;
+      font-size: 3rem;
+      animation: spin 1.5s linear infinite;
+      color: #4A00E0;
+      margin-bottom: 20px;
     }
 
     @keyframes spin {
@@ -286,168 +462,240 @@
       background: #ffeaa7;
       border-radius: 10px;
       margin: 20px;
+      animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
     }
 
     .file-name {
       margin-top: 15px;
       font-weight: bold;
-      color: #4facfe;
+      color: #4A00E0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      padding: 8px 15px;
+      background: #e3f2fd;
+      border-radius: 20px;
+      display: inline-block;
     }
 
     .success-msg {
       text-align: center;
-      padding: 10px;
+      padding: 12px 20px;
       color: #2ed573;
       background: #d1f7e5;
-      border-radius: 5px;
-      margin-top: 10px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: inline-block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     
-    .action-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
+    .file-info {
+      text-align: center;
       margin-top: 15px;
     }
     
-    .action-btn {
-      background: linear-gradient(135deg, #5c67f2 0%, #8a2be2 100%);
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(92, 103, 242, 0.3);
-    }
-    
-    .stats {
-      background: #f8f9fa;
+    .instructions {
+      background: #e3f2fd;
       border-radius: 10px;
       padding: 20px;
       margin-top: 20px;
+      border-left: 4px solid #4A00E0;
     }
     
-    .stats h3 {
+    .instructions h3 {
+      color: #4A00E0;
+      margin-bottom: 15px;
       text-align: center;
-      color: #4facfe;
+    }
+    
+    .instructions ol {
+      padding-left: 20px;
       margin-bottom: 15px;
     }
     
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
+    .instructions li {
+      margin-bottom: 10px;
+      line-height: 1.5;
     }
     
-    .stat-card {
-      background: white;
+    .support-text {
+      text-align: center;
+      margin-top: 15px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .csv-badge {
+      display: inline-block;
+      background: #217346;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    
+    .delimiter-info {
+      text-align: center;
+      padding: 10px;
+      background: #e3f2fd;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    
+    .auto-process {
+      background: #e3f2fd;
       border-radius: 10px;
       padding: 15px;
+      margin-top: 20px;
       text-align: center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      border-left: 4px solid #ff416c;
     }
     
-    .stat-card i {
-      font-size: 1.8rem;
-      color: #4facfe;
-      margin-bottom: 10px;
+    .auto-process h4 {
+      color: #ff416c;
+      margin: 0 0 10px 0;
     }
     
-    .stat-card .value {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #333;
+    .removed-columns {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
     }
     
-    .stat-card .label {
-      font-size: 0.9rem;
-      color: #666;
+    .removed-column {
+      background: #ff4757;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 15px;
+      font-size: 0.8rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1><i class="fas fa-table"></i> Editor de Tablas Excel</h1>
-      <p>Sube, edita y exporta tus archivos Excel fácilmente</p>
+      <h1><i class="fas fa-table"></i> Editor de Tablas CSV</h1>
+      <p>Procesamiento automático de columnas</p>
     </div>
 
     <div class="controls">
       <div class="upload-area" id="uploadArea">
-        <i class="fas fa-file-excel"></i>
-        <h3>Sube tu archivo Excel</h3>
-        <p>Formatos soportados: .xlsx, .xls</p>
+        <i class="fas fa-file-csv"></i>
+        <h3>Sube tu archivo CSV</h3>
+        <p>Las columnas 3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41 se eliminarán automáticamente</p>
         <button class="upload-btn" type="button">
           <i class="fas fa-upload"></i> Seleccionar Archivo
         </button>
-        <input type="file" id="fileInput" accept=".xlsx, .xls" />
-        <div id="fileName" class="file-name"></div>
+        <input type="file" id="fileInput" accept=".csv" />
+        <div class="file-info">
+          <div id="fileName" class="file-name"></div>
+          <div id="delimiterInfo" class="delimiter-info">
+            Delimitador detectado: <span id="detectedDelimiter">,</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="delimiter-controls">
+        <div class="delimiter-group">
+          <h4>Delimitador detectado</h4>
+          <div class="delimiter-options">
+            <button id="commaBtn" class="delimiter-btn active" data-delimiter=",">, (Coma)</button>
+            <button id="semicolonBtn" class="delimiter-btn" data-delimiter=";">; (Punto y coma)</button>
+          </div>
+        </div>
+        
+        <div class="delimiter-group">
+          <h4>Personalizar delimitador</h4>
+          <div class="custom-delimiter">
+            <input type="text" id="customDelimiter" maxlength="1" value="," />
+            <button id="applyDelimiterBtn" class="action-btn">
+              <i class="fas fa-check"></i> Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="auto-process">
+        <h4>Columnas eliminadas automáticamente</h4>
+        <div class="removed-columns" id="removedColumns">
+          <div class="removed-column">Col 3</div>
+          <div class="removed-column">Col 5</div>
+          <div class="removed-column">Col 7</div>
+          <div class="removed-column">Col 9</div>
+          <div class="removed-column">Col 11</div>
+          <div class="removed-column">Col 13</div>
+          <div class="removed-column">Col 15</div>
+          <div class="removed-column">Col 17</div>
+          <div class="removed-column">Col 19</div>
+          <div class="removed-column">Col 21</div>
+          <div class="removed-column">Col 23</div>
+          <div class="removed-column">Col 25</div>
+          <div class="removed-column">Col 27</div>
+          <div class="removed-column">Col 29</div>
+          <div class="removed-column">Col 31</div>
+          <div class="removed-column">Col 33</div>
+          <div class="removed-column">Col 35</div>
+          <div class="removed-column">Col 37</div>
+          <div class="removed-column">Col 39</div>
+          <div class="removed-column">Col 41</div>
+        </div>
       </div>
 
       <div class="action-buttons">
         <button id="exportBtn" disabled type="button" class="action-btn">
-          <i class="fas fa-download"></i> Exportar a Excel
+          <i class="fas fa-download"></i> Exportar a CSV
         </button>
         <button id="resetBtn" type="button" class="action-btn">
           <i class="fas fa-redo"></i> Restablecer
         </button>
       </div>
     </div>
+    
+    <div class="instructions">
+      <h3><i class="fas fa-info-circle"></i> ¿Cómo funciona?</h3>
+      <ol>
+        <li>Selecciona un archivo CSV usando el botón "Seleccionar Archivo" o arrastra el archivo al área indicada</li>
+        <li>La aplicación detectará automáticamente el delimitador (coma, punto y coma, etc.)</li>
+        <li>Las siguientes columnas se eliminarán automáticamente: 3,5,7,9,11,13,15,17,21,23,25,27,29,31,33,35,37,39,41</li>
+        <li>Si la detección no es correcta, puedes seleccionar manualmente el delimitador</li>
+        <li>Cuando hayas terminado, haz clic en "Exportar a CSV" para descargar el archivo modificado</li>
+        <li>Usa "Restablecer" para comenzar con un nuevo archivo</li>
+      </ol>
+      <p class="support-text">Soporta archivos CSV con diferentes delimitadores <span class="csv-badge">.csv</span></p>
+    </div>
 
     <div class="table-container">
       <div id="tableContainer">
         <div class="no-data">
-          <i class="fas fa-table"></i>
-          <p>Sube un archivo Excel para comenzar</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="stats" id="statsSection" style="display: none;">
-      <h3>Estadísticas del archivo</h3>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <i class="fas fa-columns"></i>
-          <div class="value" id="columnCount">0</div>
-          <div class="label">Columnas</div>
-        </div>
-        <div class="stat-card">
-          <i class="fas fa-list-ol"></i>
-          <div class="value" id="rowCount">0</div>
-          <div class="label">Filas</div>
-        </div>
-        <div class="stat-card">
-          <i class="fas fa-trash-alt"></i>
-          <div class="value" id="deletedCols">0</div>
-          <div class="label">Columnas eliminadas</div>
-        </div>
-        <div class="stat-card">
-          <i class="fas fa-history"></i>
-          <div class="value" id="modTime">-</div>
-          <div class="label">Última modificación</div>
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Sube un archivo CSV para comenzar</p>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    let workbook;
-    let sheetName;
-    let currentData = [];
-    let deletedColumns = 0;
-    let lastModifiedTime = null;
+    let csvData = [];
+    let headers = [];
+    let currentDelimiter = ',';
+    let detectedDelimiter = ',';
+    let columnsToRemove = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40]; // Índices base 0
 
     // Elementos
     const fileInput = document.getElementById('fileInput');
@@ -456,28 +704,32 @@
     const resetBtn = document.getElementById('resetBtn');
     const tableContainer = document.getElementById('tableContainer');
     const fileNameDisplay = document.getElementById('fileName');
-    const statsSection = document.getElementById('statsSection');
-    const columnCount = document.getElementById('columnCount');
-    const rowCount = document.getElementById('rowCount');
-    const deletedCols = document.getElementById('deletedCols');
-    const modTime = document.getElementById('modTime');
+    const detectedDelimiterSpan = document.getElementById('detectedDelimiter');
+    const commaBtn = document.getElementById('commaBtn');
+    const semicolonBtn = document.getElementById('semicolonBtn');
+    const customDelimiterInput = document.getElementById('customDelimiter');
+    const applyDelimiterBtn = document.getElementById('applyDelimiterBtn');
 
     // Event listeners
     document.querySelector('.upload-btn').addEventListener('click', () => {
       fileInput.click();
     });
 
-    uploadArea.addEventListener('click', (e) => {
-      if (e.target !== exportBtn) {
-        fileInput.click();
+    fileInput.addEventListener('change', handleFile);
+    exportBtn.addEventListener('click', exportToCSV);
+    resetBtn.addEventListener('click', resetApp);
+    
+    // Eventos de delimitadores
+    commaBtn.addEventListener('click', () => setDelimiter(','));
+    semicolonBtn.addEventListener('click', () => setDelimiter(';'));
+    applyDelimiterBtn.addEventListener('click', () => {
+      const delimiter = customDelimiterInput.value;
+      if (delimiter) {
+        setDelimiter(delimiter);
       }
     });
 
-    fileInput.addEventListener('change', handleFile);
-    exportBtn.addEventListener('click', exportToExcel);
-    resetBtn.addEventListener('click', resetApp);
-
-    // Drag and drop - Corregido
+    // Drag and drop
     uploadArea.addEventListener('dragover', (e) => {
       e.preventDefault();
       uploadArea.classList.add('active');
@@ -493,28 +745,46 @@
       uploadArea.classList.remove('active');
       
       const files = e.dataTransfer.files;
-      if (files.length) {
-        // Asignar archivos al input
+      if (files.length && files[0].name.match(/\.(csv)$/i)) {
         fileInput.files = files;
-        
-        // Disparar evento change manualmente
-        const event = new Event('change', { bubbles: true });
-        fileInput.dispatchEvent(event);
+        handleFile({ target: { files: files } });
+      } else {
+        showError('Por favor, sube un archivo CSV válido (.csv)');
       }
     });
+
+    function setDelimiter(delimiter) {
+      currentDelimiter = delimiter;
+      
+      // Actualizar botones activos
+      commaBtn.classList.remove('active');
+      semicolonBtn.classList.remove('active');
+      
+      if (delimiter === ',') {
+        commaBtn.classList.add('active');
+      } else if (delimiter === ';') {
+        semicolonBtn.classList.add('active');
+      }
+      
+      customDelimiterInput.value = delimiter;
+      
+      // Reprocesar el archivo si ya está cargado
+      if (csvData.length > 0) {
+        reprocessFile();
+      }
+    }
 
     function handleFile(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       // Mostrar nombre del archivo
-      fileNameDisplay.textContent = `Archivo seleccionado: ${file.name}`;
+      fileNameDisplay.textContent = file.name;
       
       // Validar extensión
-      const validExtensions = ['.xlsx', '.xls'];
       const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-      if (!validExtensions.includes(extension)) {
-        showError('Formato de archivo no válido. Por favor, sube un archivo .xlsx o .xls');
+      if (extension !== '.csv') {
+        showError('Formato de archivo no válido. Por favor, sube un archivo .csv');
         fileNameDisplay.textContent = '';
         return;
       }
@@ -525,43 +795,178 @@
 
       reader.onload = function(e) {
         try {
-          const data = new Uint8Array(e.target.result);
-          workbook = XLSX.read(data, { type: 'array' });
-
-          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-            showError('El archivo no contiene hojas válidas');
+          const text = e.target.result;
+          
+          // Detectar delimitador
+          detectedDelimiter = detectDelimiter(text);
+          currentDelimiter = detectedDelimiter;
+          detectedDelimiterSpan.textContent = currentDelimiter;
+          setDelimiter(currentDelimiter);
+          
+          // Parsear el CSV
+          const result = parseCSV(text, currentDelimiter);
+          headers = result.headers;
+          csvData = result.data;
+          
+          if (csvData.length === 0) {
+            showError('El archivo no contiene datos');
             return;
           }
 
-          sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-
-          currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          displayTable(currentData);
+          // Eliminar las columnas específicas automáticamente
+          removeSpecificColumns();
+          
+          displayTable();
           exportBtn.disabled = false;
-          statsSection.style.display = 'block';
-          updateStats();
           
           // Mostrar mensaje de éxito
-          showSuccess('Archivo cargado correctamente');
+          showSuccess('Archivo cargado y procesado correctamente!');
         } catch (error) {
-          showError('Error al procesar el archivo. Por favor, verifica que sea un archivo Excel válido.');
+          showError('Error al procesar el archivo: ' + error.message);
           console.error('Error:', error);
         }
       };
 
       reader.onerror = function() {
-        showError('Error al leer el archivo. Inténtalo de nuevo.');
+        showError('Error de lectura: ' + reader.error.message);
       };
 
-      reader.readAsArrayBuffer(file);
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    // Función para eliminar las columnas específicas
+    function removeSpecificColumns() {
+      // Ordenar de mayor a menor para evitar problemas al eliminar
+      const sortedIndices = [...columnsToRemove].sort((a, b) => b - a);
+      
+      for (const index of sortedIndices) {
+        // Solo si el índice es válido (menor que la cantidad de columnas actual)
+        if (index < headers.length) {
+          // Eliminar del header
+          headers.splice(index, 1);
+          
+          // Eliminar de cada fila
+          csvData.forEach(row => {
+            if (index < row.length) {
+              row.splice(index, 1);
+            }
+          });
+        }
+      }
+    }
+
+    // Función para detectar el delimitador
+    function detectDelimiter(csvText) {
+      const firstLine = csvText.split(/\r?\n/)[0];
+      
+      // Contar ocurrencias de delimitadores comunes
+      const delimiters = [',', ';', '\t', '|'];
+      let maxCount = 0;
+      let detected = ',';
+      
+      for (const delim of delimiters) {
+        const count = (firstLine.match(new RegExp(`\\${delim}`, 'g')) || []).length;
+        if (count > maxCount) {
+          maxCount = count;
+          detected = delim;
+        }
+      }
+      
+      return detected;
+    }
+
+    // Función para parsear CSV
+    function parseCSV(csvText, delimiter) {
+      const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length === 0) {
+        return { headers: [], data: [] };
+      }
+      
+      // Obtener encabezados
+      const headers = parseCSVLine(lines[0], delimiter);
+      
+      // Procesar datos
+      const data = [];
+      for (let i = 1; i < lines.length; i++) {
+        const row = parseCSVLine(lines[i], delimiter);
+        if (row.length === headers.length) {
+          data.push(row);
+        } else if (row.length > 0) {
+          console.warn(`Fila ${i+1} tiene ${row.length} columnas, se esperaban ${headers.length}. Fila omitida.`);
+        }
+      }
+      
+      return { headers, data };
+    }
+
+    // Función para parsear una línea CSV
+    function parseCSVLine(line, delimiter) {
+      const fields = [];
+      let field = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+          if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+            // Comillas dobles escapadas
+            field += '"';
+            i++; // Saltar la siguiente comilla
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === delimiter && !inQuotes) {
+          fields.push(field);
+          field = '';
+        } else {
+          field += char;
+        }
+      }
+      
+      // Añadir el último campo
+      fields.push(field);
+      
+      return fields;
+    }
+
+    function reprocessFile() {
+      if (!fileInput.files[0]) return;
+      
+      showLoading();
+      
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const result = parseCSV(text, currentDelimiter);
+          headers = result.headers;
+          csvData = result.data;
+          
+          if (csvData.length === 0) {
+            showError('El archivo no contiene datos');
+            return;
+          }
+
+          // Eliminar las columnas específicas automáticamente
+          removeSpecificColumns();
+          
+          displayTable();
+          showSuccess('Archivo reprocesado con nuevo delimitador');
+        } catch (error) {
+          showError('Error al reprocesar el archivo: ' + error.message);
+        }
+      };
+      
+      reader.readAsText(fileInput.files[0], 'UTF-8');
     }
 
     function showLoading() {
       tableContainer.innerHTML = `
         <div class="loading">
           <i class="fas fa-spinner"></i>
-          <p>Procesando archivo...</p>
+          <p>Procesando archivo y eliminando columnas...</p>
         </div>
       `;
     }
@@ -574,13 +979,14 @@
       successElement.className = 'success-msg';
       successElement.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
       
-      // Insertar después del área de carga
-      document.querySelector('.controls').appendChild(successElement);
+      // Insertar en el área de información
+      document.querySelector('.file-info').appendChild(successElement);
       
-      // Remover después de 3 segundos
+      // Remover después de 4 segundos
       setTimeout(() => {
-        successElement.remove();
-      }, 3000);
+        successElement.style.opacity = '0';
+        setTimeout(() => successElement.remove(), 300);
+      }, 4000);
     }
 
     function showError(message) {
@@ -588,14 +994,18 @@
         <div class="error">
           <i class="fas fa-exclamation-triangle"></i>
           <p>${message}</p>
+          <p>Por favor, intenta con otro archivo</p>
         </div>
       `;
+      
+      // Deshabilitar exportación
+      exportBtn.disabled = true;
     }
 
-    function displayTable(data) {
+    function displayTable() {
       tableContainer.innerHTML = '';
 
-      if (!data || data.length === 0) {
+      if (csvData.length === 0 || headers.length === 0) {
         tableContainer.innerHTML = `
           <div class="no-data">
             <i class="fas fa-table"></i>
@@ -610,16 +1020,14 @@
       // Encabezados
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      const headers = data[0] || [];
-
+      
       headers.forEach((header, index) => {
         const th = document.createElement('th');
         th.innerHTML = `
           <div class="column-header">
-            <span class="column-name" title="${header || 'Columna ' + (index + 1)}">${header || 'Columna ' + (index + 1)}</span>
-            <button class="delete-btn" onclick="removeColumn(${index})" title="Eliminar columna" type="button">
-              <i class="fas fa-trash"></i>
-            </button>
+            <span class="column-name" title="${header || 'Columna ' + (index + 1)}">
+              ${header || 'Columna ' + (index + 1)}
+            </span>
           </div>
         `;
         headerRow.appendChild(th);
@@ -630,9 +1038,9 @@
 
       // Cuerpo
       const tbody = document.createElement('tbody');
-      for (let i = 1; i < data.length; i++) {
+      for (let i = 0; i < csvData.length; i++) {
         const row = document.createElement('tr');
-        const rowData = data[i] || [];
+        const rowData = csvData[i] || [];
         
         rowData.forEach((cell, cellIndex) => {
           const td = document.createElement('td');
@@ -646,6 +1054,12 @@
           
           row.appendChild(td);
         });
+        
+        // Resaltar filas vacías
+        if (rowData.length === 0 || rowData.every(cell => cell === null || cell === undefined || cell === '')) {
+          row.style.backgroundColor = '#fff9c4';
+        }
+        
         tbody.appendChild(row);
       }
 
@@ -653,73 +1067,53 @@
       tableContainer.appendChild(table);
     }
 
-    function removeColumn(index) {
+    function exportToCSV() {
       try {
-        if (!workbook || !sheetName) {
-          showError('No se ha cargado ningún archivo');
-          return;
-        }
-
-        const worksheet = workbook.Sheets[sheetName];
-        const range = XLSX.utils.decode_range(worksheet['!ref']);
-
-        // Eliminar la columna del rango
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-          const ref = XLSX.utils.encode_cell({ r: R, c: index });
-          delete worksheet[ref];
-        }
-
-        // Reordenar celdas a la izquierda
-        for (let C = index + 1; C <= range.e.c; ++C) {
-          for (let R = range.s.r; R <= range.e.r; ++R) {
-            const oldRef = XLSX.utils.encode_cell({ r: R, c: C });
-            const newRef = XLSX.utils.encode_cell({ r: R, c: C - 1 });
-            if (worksheet[oldRef]) {
-              worksheet[newRef] = worksheet[oldRef];
-              delete worksheet[oldRef];
-            }
-          }
-        }
-
-        // Actualizar rango
-        range.e.c--;
-        worksheet['!ref'] = XLSX.utils.encode_range(range);
-
-        // Actualizar datos y volver a mostrar
-        currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        displayTable(currentData);
-        
-        // Actualizar estadísticas
-        deletedColumns++;
-        lastModifiedTime = new Date();
-        updateStats();
-        
-        // Mostrar mensaje de éxito
-        showSuccess('Columna eliminada correctamente');
-      } catch (error) {
-        showError('Error al eliminar la columna.');
-        console.error('Error:', error);
-      }
-    }
-
-    function exportToExcel() {
-      try {
-        if (!workbook || !sheetName) {
+        if (headers.length === 0 || csvData.length === 0) {
           showError('No hay datos para exportar');
           return;
         }
 
-        const newWorkbook = XLSX.utils.book_new();
-        const worksheet = workbook.Sheets[sheetName];
-        XLSX.utils.book_append_sheet(newWorkbook, worksheet, sheetName || "Datos");
-        XLSX.writeFile(newWorkbook, "tabla_modificada.xlsx");
+        // Crear contenido CSV
+        let csvContent = headers.map(field => escapeCSVField(field, currentDelimiter)).join(currentDelimiter) + '\r\n';
+        csvContent += csvData.map(row => 
+          row.map(field => escapeCSVField(field, currentDelimiter)).join(currentDelimiter)
+        ).join('\r\n');
+        
+        // Crear y descargar archivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'datos_procesados.csv');
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
         // Mostrar mensaje de éxito
-        showSuccess('Archivo exportado correctamente');
+        showSuccess('Archivo exportado correctamente!');
       } catch (error) {
-        showError('Error al exportar el archivo.');
+        showError('Error al exportar: ' + error.message);
         console.error('Error:', error);
       }
+    }
+    
+    // Función para escapar campos CSV
+    function escapeCSVField(field, delimiter) {
+      if (field === null || field === undefined) {
+        return '';
+      }
+      
+      const str = String(field);
+      
+      // Si el campo contiene el delimitador, comillas o saltos de línea, encerrarlo en comillas
+      if (str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
     }
     
     function resetApp() {
@@ -727,33 +1121,17 @@
       fileNameDisplay.textContent = '';
       tableContainer.innerHTML = `
         <div class="no-data">
-          <i class="fas fa-table"></i>
-          <p>Sube un archivo Excel para comenzar</p>
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Sube un archivo CSV para comenzar</p>
         </div>
       `;
       exportBtn.disabled = true;
-      statsSection.style.display = 'none';
-      workbook = null;
-      sheetName = null;
-      currentData = [];
-      deletedColumns = 0;
-      lastModifiedTime = null;
-    }
-    
-    function updateStats() {
-      if (currentData.length === 0) return;
-      
-      // Columnas y filas
-      columnCount.textContent = currentData[0].length;
-      rowCount.textContent = currentData.length - 1;
-      
-      // Columnas eliminadas
-      deletedCols.textContent = deletedColumns;
-      
-      // Última modificación
-      if (lastModifiedTime) {
-        modTime.textContent = lastModifiedTime.toLocaleTimeString();
-      }
+      csvData = [];
+      headers = [];
+      currentDelimiter = ',';
+      detectedDelimiter = ',';
+      detectedDelimiterSpan.textContent = ',';
+      setDelimiter(',');
     }
   </script>
 </body>
