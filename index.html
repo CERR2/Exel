@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Tablas Excel</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .controls {
+      padding: 30px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .upload-area {
+      border: 3px dashed #4facfe;
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      background: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .upload-area:hover {
+      background: #f8f9ff;
+      border-color: #00f2fe;
+    }
+
+    .upload-area.active {
+      background: #f0f8ff;
+      border-color: #00f2fe;
+    }
+
+    .upload-area i {
+      font-size: 3rem;
+      color: #4facfe;
+      margin-bottom: 15px;
+    }
+
+    .upload-area h3 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .upload-area p {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    }
+
+    .export-section {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #exportBtn {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      opacity: 0.7;
+    }
+
+    #exportBtn:enabled {
+      opacity: 1;
+    }
+
+    #exportBtn:enabled:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    }
+
+    #exportBtn:disabled {
+      cursor: not-allowed;
+    }
+
+    .table-container {
+      padding: 30px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      position: relative;
+    }
+
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e3f2fd;
+      transition: background-color 0.3s ease;
+    }
+
+    .delete-btn {
+      background: #ff4757;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .delete-btn:hover {
+      background: #ff3742;
+      transform: scale(1.05);
+    }
+
+    .delete-btn i {
+      font-size: 0.8rem;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .column-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+      font-size: 1.2rem;
+    }
+
+    .no-data i {
+      font-size: 3rem;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .controls {
+        padding: 20px;
+      }
+      
+      .upload-area {
+        padding: 20px;
+      }
+      
+      .table-container {
+        padding: 15px;
+      }
+      
+      th, td {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+      }
+      
+      .delete-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+      }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .loading i {
+      font-size: 2rem;
+      animation: spin 1s linear infinite;
+      color: #4facfe;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      text-align: center;
+      padding: 20px;
+      color: #ff4757;
+      background: #ffeaa7;
+      border-radius: 10px;
+      margin: 20px;
+    }
+
+    .file-name {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #4facfe;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .success-msg {
+      text-align: center;
+      padding: 10px;
+      color: #2ed573;
+      background: #d1f7e5;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .action-btn {
+      background: linear-gradient(135deg, #5c67f2 0%, #8a2be2 100%);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(92, 103, 242, 0.3);
+    }
+    
+    .stats {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .stats h3 {
+      text-align: center;
+      color: #4facfe;
+      margin-bottom: 15px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+    
+    .stat-card i {
+      font-size: 1.8rem;
+      color: #4facfe;
+      margin-bottom: 10px;
+    }
+    
+    .stat-card .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .stat-card .label {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-table"></i> Editor de Tablas Excel</h1>
+      <p>Sube, edita y exporta tus archivos Excel fácilmente</p>
+    </div>
+
+    <div class="controls">
+      <div class="upload-area" id="uploadArea">
+        <i class="fas fa-file-excel"></i>
+        <h3>Sube tu archivo Excel</h3>
+        <p>Formatos soportados: .xlsx, .xls</p>
+        <button class="upload-btn" type="button">
+          <i class="fas fa-upload"></i> Seleccionar Archivo
+        </button>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" />
+        <div id="fileName" class="file-name"></div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="exportBtn" disabled type="button" class="action-btn">
+          <i class="fas fa-download"></i> Exportar a Excel
+        </button>
+        <button id="resetBtn" type="button" class="action-btn">
+          <i class="fas fa-redo"></i> Restablecer
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div id="tableContainer">
+        <div class="no-data">
+          <i class="fas fa-table"></i>
+          <p>Sube un archivo Excel para comenzar</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats" id="statsSection" style="display: none;">
+      <h3>Estadísticas del archivo</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <i class="fas fa-columns"></i>
+          <div class="value" id="columnCount">0</div>
+          <div class="label">Columnas</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-list-ol"></i>
+          <div class="value" id="rowCount">0</div>
+          <div class="label">Filas</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-trash-alt"></i>
+          <div class="value" id="deletedCols">0</div>
+          <div class="label">Columnas eliminadas</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-history"></i>
+          <div class="value" id="modTime">-</div>
+          <div class="label">Última modificación</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let workbook;
+    let sheetName;
+    let currentData = [];
+    let deletedColumns = 0;
+    let lastModifiedTime = null;
+
+    // Elementos
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const exportBtn = document.getElementById('exportBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const tableContainer = document.getElementById('tableContainer');
+    const fileNameDisplay = document.getElementById('fileName');
+    const statsSection = document.getElementById('statsSection');
+    const columnCount = document.getElementById('columnCount');
+    const rowCount = document.getElementById('rowCount');
+    const deletedCols = document.getElementById('deletedCols');
+    const modTime = document.getElementById('modTime');
+
+    // Event listeners
+    document.querySelector('.upload-btn').addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    uploadArea.addEventListener('click', (e) => {
+      if (e.target !== exportBtn) {
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', handleFile);
+    exportBtn.addEventListener('click', exportToExcel);
+    resetBtn.addEventListener('click', resetApp);
+
+    // Drag and drop - Corregido
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('active');
+    });
+
+    uploadArea.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+      
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        // Asignar archivos al input
+        fileInput.files = files;
+        
+        // Disparar evento change manualmente
+        const event = new Event('change', { bubbles: true });
+        fileInput.dispatchEvent(event);
+      }
+    });
+
+    function handleFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Mostrar nombre del archivo
+      fileNameDisplay.textContent = `Archivo seleccionado: ${file.name}`;
+      
+      // Validar extensión
+      const validExtensions = ['.xlsx', '.xls'];
+      const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      if (!validExtensions.includes(extension)) {
+        showError('Formato de archivo no válido. Por favor, sube un archivo .xlsx o .xls');
+        fileNameDisplay.textContent = '';
+        return;
+      }
+
+      showLoading();
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          workbook = XLSX.read(data, { type: 'array' });
+
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            showError('El archivo no contiene hojas válidas');
+            return;
+          }
+
+          sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+
+          currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          displayTable(currentData);
+          exportBtn.disabled = false;
+          statsSection.style.display = 'block';
+          updateStats();
+          
+          // Mostrar mensaje de éxito
+          showSuccess('Archivo cargado correctamente');
+        } catch (error) {
+          showError('Error al procesar el archivo. Por favor, verifica que sea un archivo Excel válido.');
+          console.error('Error:', error);
+        }
+      };
+
+      reader.onerror = function() {
+        showError('Error al leer el archivo. Inténtalo de nuevo.');
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function showLoading() {
+      tableContainer.innerHTML = `
+        <div class="loading">
+          <i class="fas fa-spinner"></i>
+          <p>Procesando archivo...</p>
+        </div>
+      `;
+    }
+    
+    function showSuccess(message) {
+      const existingSuccess = document.querySelector('.success-msg');
+      if (existingSuccess) existingSuccess.remove();
+      
+      const successElement = document.createElement('div');
+      successElement.className = 'success-msg';
+      successElement.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      
+      // Insertar después del área de carga
+      document.querySelector('.controls').appendChild(successElement);
+      
+      // Remover después de 3 segundos
+      setTimeout(() => {
+        successElement.remove();
+      }, 3000);
+    }
+
+    function showError(message) {
+      tableContainer.innerHTML = `
+        <div class="error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>${message}</p>
+        </div>
+      `;
+    }
+
+    function displayTable(data) {
+      tableContainer.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        tableContainer.innerHTML = `
+          <div class="no-data">
+            <i class="fas fa-table"></i>
+            <p>No hay datos para mostrar</p>
+          </div>
+        `;
+        return;
+      }
+
+      const table = document.createElement('table');
+
+      // Encabezados
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const headers = data[0] || [];
+
+      headers.forEach((header, index) => {
+        const th = document.createElement('th');
+        th.innerHTML = `
+          <div class="column-header">
+            <span class="column-name" title="${header || 'Columna ' + (index + 1)}">${header || 'Columna ' + (index + 1)}</span>
+            <button class="delete-btn" onclick="removeColumn(${index})" title="Eliminar columna" type="button">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        headerRow.appendChild(th);
+      });
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      // Cuerpo
+      const tbody = document.createElement('tbody');
+      for (let i = 1; i < data.length; i++) {
+        const row = document.createElement('tr');
+        const rowData = data[i] || [];
+        
+        rowData.forEach((cell, cellIndex) => {
+          const td = document.createElement('td');
+          td.textContent = cell != null ? cell : '';
+          
+          // Resaltar celdas vacías
+          if (cell === null || cell === undefined || cell === '') {
+            td.style.backgroundColor = '#ffecb3';
+            td.title = 'Celda vacía';
+          }
+          
+          row.appendChild(td);
+        });
+        tbody.appendChild(row);
+      }
+
+      table.appendChild(tbody);
+      tableContainer.appendChild(table);
+    }
+
+    function removeColumn(index) {
+      try {
+        if (!workbook || !sheetName) {
+          showError('No se ha cargado ningún archivo');
+          return;
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+        // Eliminar la columna del rango
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+          const ref = XLSX.utils.encode_cell({ r: R, c: index });
+          delete worksheet[ref];
+        }
+
+        // Reordenar celdas a la izquierda
+        for (let C = index + 1; C <= range.e.c; ++C) {
+          for (let R = range.s.r; R <= range.e.r; ++R) {
+            const oldRef = XLSX.utils.encode_cell({ r: R, c: C });
+            const newRef = XLSX.utils.encode_cell({ r: R, c: C - 1 });
+            if (worksheet[oldRef]) {
+              worksheet[newRef] = worksheet[oldRef];
+              delete worksheet[oldRef];
+            }
+          }
+        }
+
+        // Actualizar rango
+        range.e.c--;
+        worksheet['!ref'] = XLSX.utils.encode_range(range);
+
+        // Actualizar datos y volver a mostrar
+        currentData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        displayTable(currentData);
+        
+        // Actualizar estadísticas
+        deletedColumns++;
+        lastModifiedTime = new Date();
+        updateStats();
+        
+        // Mostrar mensaje de éxito
+        showSuccess('Columna eliminada correctamente');
+      } catch (error) {
+        showError('Error al eliminar la columna.');
+        console.error('Error:', error);
+      }
+    }
+
+    function exportToExcel() {
+      try {
+        if (!workbook || !sheetName) {
+          showError('No hay datos para exportar');
+          return;
+        }
+
+        const newWorkbook = XLSX.utils.book_new();
+        const worksheet = workbook.Sheets[sheetName];
+        XLSX.utils.book_append_sheet(newWorkbook, worksheet, sheetName || "Datos");
+        XLSX.writeFile(newWorkbook, "tabla_modificada.xlsx");
+        
+        // Mostrar mensaje de éxito
+        showSuccess('Archivo exportado correctamente');
+      } catch (error) {
+        showError('Error al exportar el archivo.');
+        console.error('Error:', error);
+      }
+    }
+    
+    function resetApp() {
+      fileInput.value = '';
+      fileNameDisplay.textContent = '';
+      tableContainer.innerHTML = `
+        <div class="no-data">
+          <i class="fas fa-table"></i>
+          <p>Sube un archivo Excel para comenzar</p>
+        </div>
+      `;
+      exportBtn.disabled = true;
+      statsSection.style.display = 'none';
+      workbook = null;
+      sheetName = null;
+      currentData = [];
+      deletedColumns = 0;
+      lastModifiedTime = null;
+    }
+    
+    function updateStats() {
+      if (currentData.length === 0) return;
+      
+      // Columnas y filas
+      columnCount.textContent = currentData[0].length;
+      rowCount.textContent = currentData.length - 1;
+      
+      // Columnas eliminadas
+      deletedCols.textContent = deletedColumns;
+      
+      // Última modificación
+      if (lastModifiedTime) {
+        modTime.textContent = lastModifiedTime.toLocaleTimeString();
+      }
+    }
+  </script>
+</body>
+</html>
