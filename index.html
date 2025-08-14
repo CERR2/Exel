@@ -598,7 +598,7 @@
       <div class="upload-area" id="uploadArea">
         <i class="fas fa-file-csv"></i>
         <h3>Sube tu archivo CSV</h3>
-        <p>Las columnas 3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41 se eliminarán automáticamente</p>
+        <p>Las columnas 3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51 se eliminarán automáticamente</p>
         <button class="upload-btn" type="button">
           <i class="fas fa-upload"></i> Seleccionar Archivo
         </button>
@@ -654,6 +654,11 @@
           <div class="removed-column">Col 37</div>
           <div class="removed-column">Col 39</div>
           <div class="removed-column">Col 41</div>
+          <div class="removed-column">Col 43</div>
+          <div class="removed-column">Col 45</div>
+          <div class="removed-column">Col 47</div>
+          <div class="removed-column">Col 49</div>
+          <div class="removed-column">Col 51</div>
         </div>
       </div>
 
@@ -695,7 +700,7 @@
     let headers = [];
     let currentDelimiter = ',';
     let detectedDelimiter = ',';
-    let columnsToRemove = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40]; // Índices base 0
+    let columnsToRemove = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50]; // Índices base 0
 
     // Elementos
     const fileInput = document.getElementById('fileInput');
